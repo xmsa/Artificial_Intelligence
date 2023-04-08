@@ -1,4 +1,5 @@
 import os
+import re
 import numpy as np
 import pandas as pd
 
@@ -28,8 +29,51 @@ class Node:
 
 
 class Query:
-    def __init__(self, query):
-        self.__query = query
+    def __init__(self,query_variable, evidence_variables):
+        self.__query_variable = query_variable
+        self.__evidence_variables = evidence_variables
+
+    @property
+    def query_variable(self):
+        return self.__query_variable
+
+    @property
+    def evidence_variables(self):
+        return self.__evidence_variables
+
+
+class Queries:
+    def __init__(self):
+        self.__list_of_query = list()
+
+    def append(self, query):
+        self.__list_of_query.append(query)
+
+    def __getitem__(self, index):
+        return self.__list_of_query[index]
+
+    @staticmethod
+    def split_query(query):
+        def split_variable(string):
+            lst = dict()
+            if len(string) == 0:
+                return lst
+            string = string.split(',')
+            pattern = r'\"(\w+)\":(\d*)'
+            for s in string:
+                q = re.findall(pattern, s)[0]
+                lst[q[0]] = int(q[1])
+            return lst
+
+        queries = Queries()
+
+        pattern = r'\[\{(.*?)\},\{(.*?)\}\]'
+        for match in re.findall(pattern, query):
+            qv = split_variable(match[0])
+            ev = split_variable(match[1])
+            q = Query(qv, ev)
+            queries.append(q)
+        return queries
 
 
 class Network:
@@ -50,7 +94,7 @@ class Network:
             lines = list(map(lambda x: x.strip(), lines))
 
         nw = Network()
-        query = Query(lines.pop())
+        string_query = lines.pop()
         size_network = int(lines.pop(0))
         for i in range(size_network):
             name = lines.pop(0)
@@ -70,8 +114,11 @@ class Network:
                     tabel.append(value[:-1] + [0, 1-value[-1]])
                 tabel = np.array(tabel)
             nw.add_node(name, parent, tabel)
+        string_query = string_query[1:-1]
+        string_query = string_query.replace(' ', '')
 
-        return nw, query
+        queries = Queries.split_query(string_query)
+        return nw, queries
 
 
 def is_float(string):
@@ -84,4 +131,4 @@ def is_float(string):
 
 if __name__ == '__main__':
     filename = 'input.txt'
-    nw, query = Network.read_file(filename=filename)
+    nw, queries = Network.read_file(filename=filename)
