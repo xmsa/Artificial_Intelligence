@@ -25,11 +25,11 @@ class Node:
     @tabel.setter
     def tabel(self, value):
         self.__tabel = pd.DataFrame(
-            value, columns=self.parent + [self.name, 'prob'])
+            value, columns=self.parent + [self.name, 'value'])
 
 
 class Query:
-    def __init__(self,query_variable, evidence_variables):
+    def __init__(self, query_variable, evidence_variables):
         self.__query_variable = query_variable
         self.__evidence_variables = evidence_variables
 
@@ -79,10 +79,46 @@ class Queries:
 class Network:
     def __init__(self):
         self.nodes = list()
+        self.__joint_table = None
 
     def add_node(self, name, parent, tabel):
         node = Node(name, parent, tabel)
         self.nodes.append(node)
+
+    def __create_joint_table(self):
+        def is_parent(parent, child):
+            if parent in child.parent:
+                return True
+            else:
+                return False
+
+        nodes = self.nodes
+        tbls = [node.tabel for node in nodes]
+        while len(tbls) > 1:
+            tbl1 = tbls.pop(0)
+            tbl2 = tbls.pop(0)
+            col1 = set(list(tbl1.columns))-set(['value'])
+            col2 = set(list(tbl2.columns))-set(['value'])
+            col = list(col1.intersection(col2))
+            if len(col) == 0:
+                tbl = pd.merge(tbl1, tbl2, how="cross")
+            else:
+                tbl = pd.merge(tbl1, tbl2, on=col)
+            cols = list(col1.union(col2))
+            value = tbl.drop(cols, axis=1).prod(axis=1)
+
+            tbl_ = tbl[cols].copy()
+            tbl_["value"] = value
+            tbls.append(tbl_)
+
+        return tbls[0]
+
+    @property
+    def joint_table(self):
+        if self.__joint_table is None:
+            self.__joint_table = self.__create_joint_table()
+        print(self.__joint_table)
+        return self.__joint_table
 
     @staticmethod
     def read_file(filename):
@@ -132,3 +168,4 @@ def is_float(string):
 if __name__ == '__main__':
     filename = 'input.txt'
     nw, queries = Network.read_file(filename=filename)
+    jt = nw.joint_table
