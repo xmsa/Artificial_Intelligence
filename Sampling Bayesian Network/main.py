@@ -5,13 +5,13 @@ import numpy as np
 import pandas as pd
 from network import Network, Node
 from query import Queries, Query
-from sampling import real_value, gibbs_sampling, likelihood_sampling, rejection_sampling, prioir_sampling
+from sampling import real_value, gibbs_sampling, likelihood_sampling, rejection_sampling, prior_sampling
 
 
 def sample(network, queries):
     for i, query in enumerate(queries):
         rv = real_value(network, query)
-        ps = prioir_sampling()
+        ps = prior_sampling(network, query)
         rs = rejection_sampling()
         ls = likelihood_sampling()
         gs = gibbs_sampling()

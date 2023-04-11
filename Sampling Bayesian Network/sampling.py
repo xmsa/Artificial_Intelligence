@@ -34,8 +34,51 @@ def rejection_sampling():
     return 0
 
 
-def prioir_sampling():
-    return 0
+def prior_sampling(network, query, size=1000, seed=100):
+
+    def generate_sample(network):
+        order = network.order
+        names = network.names
+        randoms_number = []
+        names = network.names
+        visited = set()
+        sample = []
+        for i in range(len(network)):
+            tbl = network[i].tabel.copy()
+            name = network[i].name
+            cols = set(tbl.columns).intersection(visited)
+            for col in cols:
+                ind = names.index(col)
+                tbl.query(f"{col}=={sample[ind]}", inplace=True)
+            rnd = random.random()
+            value = tbl["value"][tbl["value"].cumsum() > rnd].index.min()
+            sample.append(tbl[name].loc[value])
+            visited.add(name)
+
+        return sample
+
+    def generate_list_sample(network, size, seed):
+        random.seed(seed)
+        samples = []
+        for _ in range(size):
+            randoms_number = generate_sample(network)
+            samples.append(randoms_number)
+        return pd.DataFrame(samples, columns=network.names)
+
+    sample = generate_list_sample(network, size, seed)
+
+    ev = query.evidence_variables
+    qv = query.query_variable
+
+    for name, value in ev.items():
+        sample.query(f"{name}=={value}", inplace=True)
+
+    for name, value in qv.items():
+        sample.query(f"{name}=={value}", inplace=True)
+
+    size_sample = sample.shape[0]
+
+    return size_sample / size
 
 
 if __name__ == '__main__':
