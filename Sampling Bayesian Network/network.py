@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from query import Queries, Query
 
+
 class Node:
     def __init__(self, name, parent, tabel):
         self.__name = name
@@ -28,17 +29,18 @@ class Node:
             value, columns=self.parent + [self.name, 'value'])
 
 
-
-
 class Network:
     def __init__(self):
         self.nodes = list()
         self.__joint_table = None
+        self.__order = None
+        self.__names = list()
 
     def add_node(self, name, parent, tabel):
         node = Node(name, parent, tabel)
         self.nodes.append(node)
-
+        self.__order = None
+        self.__names.append(name)
     def __create_joint_table(self):
         def is_parent(parent, child):
             if parent in child.parent:
@@ -66,6 +68,45 @@ class Network:
             tbls.append(tbl_)
 
         return tbls[0]
+
+    def get_parant_name(self):
+        parent_name = {}
+        for node in self.nodes:
+            parent_name[node.name] = node.parent
+        return parent_name
+
+    def __getitem__(self, name):
+        return self.nodes[name]
+
+    def __len__(self):
+        return len(self.nodes)
+
+    def topological_sort(self):
+
+        parent_name: dict = self.get_parant_name()
+        order = []
+        for name, parent in parent_name.items():
+            if len(parent):
+                i = 0
+                for i, odr in enumerate(order):
+                    if odr in parent:
+                        break
+                order.insert(max(0, i), name)
+
+            else:
+                order.append(name)
+        order.reverse()
+        return order
+
+    @property
+    def names(self):
+        return self.__names
+    
+    @property
+    def order(self):
+        if self.__order is None:
+            self.__order = self.topological_sort()
+        return self.__order
 
     @property
     def joint_table(self):
@@ -123,3 +164,6 @@ if __name__ == '__main__':
     filename = 'input.txt'
     nw, queries = Network.read_file(filename=filename)
     jt = nw.joint_table
+    for i in range(len(nw)):
+        print(nw[i].tabel)
+        print()
