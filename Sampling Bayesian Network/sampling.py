@@ -9,8 +9,8 @@ from query import Queries, Query
 
 
 def real_value(nw: Network, query: Query):
-    jt:pd.DataFrame = nw.joint_table.copy()
-    
+    jt: pd.DataFrame = nw.joint_table.copy()
+
     if len(query.evidence_variables) != 0:
         for i in query.evidence_variables.keys():
             q = f"{i} == {query.evidence_variables[i]}"
@@ -30,8 +30,57 @@ def likelihood_sampling():
     return 0
 
 
-def rejection_sampling():
-    return 0
+def rejection_sampling(network, query, size=1000, seed=101):
+
+    def generate_sample(network):
+        order = network.order
+        names = network.names
+        randoms_number = []
+        names = network.names
+        visited = set()
+        sample = []
+        for i in range(len(network)):
+            tbl = network[i].tabel.copy()
+            name = network[i].name
+            cols = set(tbl.columns).intersection(visited)
+            for col in cols:
+                ind = names.index(col)
+                tbl.query(f"{col}=={sample[ind]}", inplace=True)
+            rnd = random.random()
+            value = tbl["value"][tbl["value"].cumsum() > rnd].index.min()
+            sample.append(tbl[name].loc[value])
+            visited.add(name)
+
+        return sample
+
+    def is_reject(randoms_number, evidence_variables, names):
+        for name, value in evidence_variables.items():
+            idx = names.index(name)
+            if randoms_number[idx] != value:
+                return True
+        return False
+
+    def generate_list_sample(network, size, seed, evidence_variables):
+        random.seed(seed)
+        samples = []
+        names = network.names
+        # while len(samples) < size:
+        for _ in range(size):
+            randoms_number = generate_sample(network)
+            if is_reject(randoms_number, evidence_variables, names):
+                continue
+            samples.append(randoms_number)
+        return pd.DataFrame(samples, columns=names)
+
+    ev = query.evidence_variables
+    qv = query.query_variable
+    sample = generate_list_sample(network, size, seed, ev)
+
+    for name, value in qv.items():
+        sample.query(f"{name}=={value}", inplace=True)
+
+    size_sample = sample.shape[0]
+    return size_sample / size
 
 
 def prior_sampling(network, query, size=1000, seed=100):
@@ -85,4 +134,5 @@ if __name__ == '__main__':
     filename = 'input.txt'
     nw, queries = Network.read_file(filename=filename)
     query = queries[1]
-    real_value(nw, query)
+    # real_value(nw, query)
+    print(rejection_sampling(nw, query))

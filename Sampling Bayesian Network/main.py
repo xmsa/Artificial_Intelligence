@@ -12,7 +12,7 @@ def sample(network, queries):
     for i, query in enumerate(queries):
         rv = real_value(network, query)
         ps = prior_sampling(network, query)
-        rs = rejection_sampling()
+        rs = rejection_sampling(network, query)
         ls = likelihood_sampling()
         gs = gibbs_sampling()
         print(i+1, rv, ps, rs, ls, gs)
