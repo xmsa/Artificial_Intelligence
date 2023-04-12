@@ -13,16 +13,16 @@ def real_value(nw: Network, query: Query):
 
     ev = query.evidence_variables
     qv = query.query_variable
-    
+
     for name, value in ev.items():
         jt.query(f"{name}=={value}", inplace=True)
-        
+
     # normalize
     jt["value"] = jt["value"]/jt["value"].sum()
 
     for name, value in qv.items():
         jt.query(f"{name}=={value}", inplace=True)
-        
+
     return round(jt.sum(axis=0)["value"], 5)
 
 
@@ -79,12 +79,12 @@ def rejection_sampling(network, query, size=1000, seed=101):
     ev = query.evidence_variables
     qv = query.query_variable
     sample = generate_list_sample(network, size, seed, ev)
-
+    size_ = sample.shape[0]
     for name, value in qv.items():
         sample.query(f"{name}=={value}", inplace=True)
 
     size_sample = sample.shape[0]
-    return size_sample / size
+    return round(size_sample / size_, 5)
 
 
 def prior_sampling(network, query, size=1000, seed=100):
@@ -131,7 +131,7 @@ def prior_sampling(network, query, size=1000, seed=100):
 
     size_sample = sample.shape[0]
 
-    return round(size_sample/size_,5)
+    return round(size_sample/size_, 5)
 
 
 if __name__ == '__main__':
@@ -139,8 +139,8 @@ if __name__ == '__main__':
     nw, queries = Network.read_file(filename=filename)
     query = queries[1]
     # real_value(nw, query)
-    print(prior_sampling(nw, queries[1]))
-    print(prior_sampling(nw, queries[2]))
-    print(prior_sampling(nw, queries[3]))
-    print(prior_sampling(nw, queries[4]))
+    print(rejection_sampling(nw, queries[1]))
+    print(rejection_sampling(nw, queries[2]))
+    print(rejection_sampling(nw, queries[3]))
+    print(rejection_sampling(nw, queries[4]))
     # print(rejection_sampling(nw, query))
