@@ -18,6 +18,19 @@ class Query:
     def evidence_variables(self):
         return self.__evidence_variables
 
+    def __str__(self):
+        qv_list = []
+        for name, value in self.__query_variable.items():
+            qv_list.append(f"{name}={value}")
+
+        ev_list = []
+        for name, value in self.evidence_variables.items():
+            ev_list.append(f"{name}={value}")
+        if len(ev_list) == 0:
+            return f"P({','.join(qv_list)})"
+        else:
+            return f"P({','.join(qv_list)}|{','.join(ev_list)})"
+
 
 class Queries:
     def __init__(self):
@@ -28,7 +41,7 @@ class Queries:
 
     def __getitem__(self, index):
         return self.__list_of_query[index]
-    
+
     def __len__(self):
         return len(self.__list_of_query)
 
