@@ -41,6 +41,7 @@ class Network:
         self.nodes.append(node)
         self.__order = None
         self.__names.append(name)
+
     def __create_joint_table(self):
         def is_parent(parent, child):
             if parent in child.parent:
@@ -81,6 +82,9 @@ class Network:
     def __len__(self):
         return len(self.nodes)
 
+    def index(self, name):
+        return self.__names.index(name)
+
     def topological_sort(self):
 
         parent_name: dict = self.get_parant_name()
@@ -101,7 +105,7 @@ class Network:
     @property
     def names(self):
         return self.__names
-    
+
     @property
     def order(self):
         if self.__order is None:
