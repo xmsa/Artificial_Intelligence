@@ -26,8 +26,53 @@ def real_value(nw: Network, query: Query):
     return round(jt.sum(axis=0)["value"], 5)
 
 
-def gibbs_sampling():
-    return 0
+def gibbs_sampling(network, query, size=1000, seed=103):
+    def generate_sample(network, name_change, last_sample, last_change):
+        order = network.order
+        names = network.names
+        last_change = (last_change+1) % len(name_change)
+        index = network.index(name_change[last_change])
+        tbl = network[index].tabel.copy()
+        name = network[index].name
+        visited = set(names) - set(name)
+        cols = set(tbl.columns).intersection(visited)
+        for col in cols:
+            ind = names.index(col)
+            tbl.query(f"{col}=={last_sample[ind]}", inplace=True)
+        rnd = random.random()
+        value = tbl["value"][tbl["value"].cumsum() > rnd].index.min()
+        sample = last_sample.copy()
+        sample[index] = tbl[name].loc[value]
+
+        return sample, last_change, last_sample
+
+    def generate_list_sample(network, size, seed, evidence_variables, start_sample=None):
+        if start_sample is None:
+            start_sample = [0]*len(network)
+            for name, value in query.evidence_variables.items():
+                start_sample[network.index(name)] = value
+        random.seed(seed)
+        samples = [start_sample]
+        last_change = -1
+        names = set(network.names)
+        name_change = list(set(names) - set(evidence_variables.keys()))
+        while len(samples) < size:
+            last_sample = samples[-1]
+            sample, last_change, last_sample = generate_sample(
+                network, name_change, last_sample, last_change)
+            samples.append(sample)
+
+        df = pd.DataFrame(samples, columns=network.names)
+
+        return df
+
+    ev = query.evidence_variables
+    qv = query.query_variable
+    sample = generate_list_sample(network, size, seed, ev)
+
+    for name, value in qv.items():
+        sample.query(f"{name}=={value}", inplace=True)
+    return round(sample.shape[0]/size, 5)
 
 
 def likelihood_weight_sampling(network, query, size=1000, seed=102):
@@ -191,8 +236,7 @@ if __name__ == '__main__':
     nw, queries = Network.read_file(filename=filename)
     query = queries[1]
     # real_value(nw, query)
-    print(likelihood_weight_sampling(nw, queries[1]))
-    print(likelihood_weight_sampling(nw, queries[2]))
-    print(likelihood_weight_sampling(nw, queries[3]))
-    print(likelihood_weight_sampling(nw, queries[4]))
-    # print(rejection_sampling(nw, query))
+    print(gibbs_sampling(nw, queries[1]))
+    print(gibbs_sampling(nw, queries[2]))
+    print(gibbs_sampling(nw, queries[3]))
+    print(gibbs_sampling(nw, queries[4]))
