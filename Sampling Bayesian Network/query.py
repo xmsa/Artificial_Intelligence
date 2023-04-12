@@ -28,6 +28,9 @@ class Queries:
 
     def __getitem__(self, index):
         return self.__list_of_query[index]
+    
+    def __len__(self):
+        return len(self.__list_of_query)
 
     @staticmethod
     def split_query(query):
