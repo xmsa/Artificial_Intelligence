@@ -120,13 +120,20 @@ class Network:
         return self.__joint_table
 
     @staticmethod
-    def read_file(filename):
-        if not os.path.exists(filename):
-            raise FileNotFoundError(f'File {filename} not found')
+    def read_file(filename=None):
+        lines = []
+        if filename is None:
+            while True:
+                lines.append(input())
+                if re.match(r'\[.*\]', lines[-1]):
+                    break
+        else:
+            if not os.path.exists(filename):
+                raise FileNotFoundError(f'File {filename} not found')
 
-        with open(filename, 'r') as f:
-            lines = f.readlines()
-            lines = list(map(lambda x: x.strip(), lines))
+            with open(filename, 'r') as f:
+                lines = f.readlines()
+                lines = list(map(lambda x: x.strip(), lines))
 
         nw = Network()
         string_query = lines.pop()

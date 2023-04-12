@@ -20,6 +20,7 @@ def sample(network, queries):
 def main():
     filename = 'input.txt'
     network, queries = Network.read_file(filename=filename)
+    # network, queries = Network.read_file()
     sample(network, queries)
 
 if __name__ == '__main__':
