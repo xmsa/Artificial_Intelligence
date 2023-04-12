@@ -27,18 +27,20 @@ def real_value(nw: Network, query: Query):
 
 
 def gibbs_sampling(network, query, size=1000, seed=103):
-    def generate_sample(network, name_change, last_sample, last_change):
+    def generate_sample(network: network, name_change, last_sample, last_change):
         order = network.order
         names = network.names
         last_change = (last_change+1) % len(name_change)
         index = network.index(name_change[last_change])
-        tbl = network[index].tabel.copy()
+        tbl: pd.DataFrame = network.joint_table.copy()
         name = network[index].name
-        visited = set(names) - set(name)
-        cols = set(tbl.columns).intersection(visited)
+        cols = set(names) - set(name)
+
         for col in cols:
             ind = names.index(col)
             tbl.query(f"{col}=={last_sample[ind]}", inplace=True)
+        tbl.reset_index(inplace=True)
+        tbl["value"] = tbl["value"] / tbl["value"].sum()
         rnd = random.random()
         value = tbl["value"][tbl["value"].cumsum() > rnd].index.min()
         sample = last_sample.copy()
