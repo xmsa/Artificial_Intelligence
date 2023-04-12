@@ -13,8 +13,8 @@ def sample(network, queries):
         rv = real_value(network, query)
         ps = prior_sampling(network, query)
         rs = rejection_sampling(network, query)
-        ls = likelihood_sampling()
-        gs = gibbs_sampling()
+        ls = likelihood_weight_sampling(network, query)
+        gs = gibbs_sampling(network, query)
         print(i+1, rv, ps, rs, ls, gs)
 
 def main():
