@@ -125,13 +125,13 @@ def prior_sampling(network, query, size=1000, seed=100):
 
     for name, value in ev.items():
         sample.query(f"{name}=={value}", inplace=True)
-    
+    size_ = sample.shape[0]
     for name, value in qv.items():
         sample.query(f"{name}=={value}", inplace=True)
 
     size_sample = sample.shape[0]
 
-    return size_sample / size
+    return round(size_sample/size_,5)
 
 
 if __name__ == '__main__':
@@ -139,8 +139,8 @@ if __name__ == '__main__':
     nw, queries = Network.read_file(filename=filename)
     query = queries[1]
     # real_value(nw, query)
-    print(real_value(nw, queries[1]))
-    print(real_value(nw, queries[2]))
-    print(real_value(nw, queries[3]))
-    print(real_value(nw, queries[4]))
+    print(prior_sampling(nw, queries[1]))
+    print(prior_sampling(nw, queries[2]))
+    print(prior_sampling(nw, queries[3]))
+    print(prior_sampling(nw, queries[4]))
     # print(rejection_sampling(nw, query))
